@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  nami-node:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nami-node:latest
+    container_name: nami-testnet-node
+    restart: unless-stopped
+    ports:
+      - "26656:26656"  # P2P
+      - "26657:26657"  # RPC
+      - "1317:1317"    # API
+      - "8545:8545"    # JSON-RPC
+      - "8546:8546"    # JSON-RPC WS
+      - "26660:26660"  # Prometheus
+    volumes:
+      - ./data:/root/.namid
+      - ./config/genesis.json:/root/.namid/config/genesis.json:ro  # Only mount genesis.json as read-only
+      - ./config/config.toml:/root/.namid/config/config.toml:ro  # Mount config.toml with P2P settings
+      - ./config/app.toml:/root/.namid/config/app.toml:ro  # Mount app.toml with JSON-RPC settings
+    env_file:
+      - .env
+    environment:
+      - CHAIN_ID=${CHAIN_ID:-nami_101012026-1}
+      - MONIKER=${MONIKER:-namitestnet}
+    command:
+      - namid
+      - start
+      - --home
+      - /root/.namid
+      - --chain-id
+      - ${CHAIN_ID:-nami_101012026-1}
+      - --minimum-gas-prices=0.0001tunami
+      - --json-rpc.api
+      - eth,txpool,personal,net,debug,web3
+    networks:
+      - nami-testnet-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:26657/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  nami-testnet-network:
+    driver: bridge
+
