@@ -32,7 +32,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     make build
 
 # Final image
-FROM alpine:3.21
+FROM alpine:3.24
 
 # Install runtime dependencies
 RUN apk add --no-cache \
